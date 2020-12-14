@@ -112,7 +112,8 @@ class MusicTransformer(nn.Module):
         return y
 
     # generate
-    def generate(self, primer=None, target_seq_length=1024, beam=0, beam_chance=1.0):
+    def generate(self, primer=None, target_seq_length=1024, beam=0, beam_chance=1.0,
+        top_p=1.0):
         """
         ----------
         Author: Damon Gwinn
@@ -123,6 +124,8 @@ class MusicTransformer(nn.Module):
         """
 
         assert (not self.training), "Cannot generate while in training mode"
+
+        assert (beam == 0 or top_p == 1.0), "Beam search and nucleus sampling are mutually exclusive"
 
         print("Generating sequence of max length:", target_seq_length)
 
@@ -156,6 +159,16 @@ class MusicTransformer(nn.Module):
                 gen_seq[..., cur_i] = beam_cols
 
             else:
+                if top_p < 1.0:
+                    # restrict sampling to cumulative nucleus
+                    p_sorted, inds = torch.sort(token_probs, descending=True)
+                    p_sorted = torch.cumsum(p_sorted, dim=-1)
+                    # always keep the first 4 options
+                    # p_sorted[...,:4] = 0
+                    to_remove = inds[p_sorted > top_p][1:]
+                    token_probs[..., to_remove] = 0
+                    token_probs = token_probs / token_probs.sum()
+
                 distrib = torch.distributions.categorical.Categorical(probs=token_probs)
                 next_token = distrib.sample()
                 # print("next token:",next_token)
