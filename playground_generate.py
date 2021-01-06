@@ -14,6 +14,7 @@ from torch.optim import Adam
 from utilities.constants import *
 from utilities.device import get_device, use_cuda
 
+# make sure we import numpy
 import numpy as np
 
 ## setup args and model, load primer
