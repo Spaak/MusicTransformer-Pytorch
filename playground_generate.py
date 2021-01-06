@@ -17,6 +17,9 @@ from utilities.device import get_device, use_cuda
 # make sure we import numpy
 import numpy as np
 
+# another comment
+# and another one
+
 ## setup args and model, load primer
 
 args = parse_generate_args()
